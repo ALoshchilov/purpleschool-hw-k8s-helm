@@ -1,1 +1,0 @@
-# purpleschool-hw-k8s-helm
