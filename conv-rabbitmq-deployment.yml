@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conv-mq-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: broker
+      
+  template:
+    metadata:
+      labels:
+        component: broker
+    spec:
+      containers:
+      - name: conv-mq-deployment
+        image: rabbitmq:4.0.5-alpine
+        env:
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                key: AMQP_USER
+                name: conv-secrets
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                key: AMQP_PASSWORD
+                name: conv-secrets
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        volumeMounts:
+          - name: rmq-data
+            mountPath: "/var/lib/rabbitmq"
+        ports:
+        - containerPort: 5672
+      volumes:
+        - name: rmq-data
+          persistentVolumeClaim:
+            claimName: conv-mq-pvc
