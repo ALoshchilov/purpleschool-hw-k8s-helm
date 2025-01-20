@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: conv-processor-clusterip
+spec:
+  type: ClusterIP
+  selector:
+    component: image_processor
+  ports:
+  - port: 3000
+    targetPort: 3000
