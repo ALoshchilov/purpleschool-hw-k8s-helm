@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.common.name }}-{{ .Values.app.name }}"
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      component: {{ .Values.app.component }}
+  template:
+    metadata:
+      labels:
+        component: {{ .Values.app.component }}
+    spec:
+      containers:
+      - name: "{{ .Values.common.name }}-{{ .Values.app.name }}"
+        image: "{{ .Values.common.registry }}/{{ .Values.app.image }}:{{ .Values.app.tag }}"
+        env:
+          - name: VITE_DOMAIN
+            valueFrom:
+              configMapKeyRef:
+                name: "{{ .Values.common.name }}-{{ .Values.app.name }}-configmap"
+                key: VITE_DOMAIN
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: {{ .Values.app.targetPort }}
