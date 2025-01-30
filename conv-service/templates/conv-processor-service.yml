@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: conv-processor-clusterip
+  name: "{{ .Values.common.name }}-{{ .Values.processor.name }}-clusterip"
 spec:
   type: ClusterIP
   selector:
-    component: image_processor
+    component: {{ .Values.processor.component }}
   ports:
-  - port: 3000
-    targetPort: 3000
+  - port: {{ .Values.processor.port }}
+    targetPort: {{ .Values.processor.targetPort }}

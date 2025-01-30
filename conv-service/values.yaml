@@ -4,15 +4,74 @@ common:
   protocol: http
   registry: antonlarichev
 
+
 app:
   replicas: 1
   name: app
   image: conv-app
-  tag: 1.2
+  tag: "1.2"
   targetPort: 80
   port: 3000
   component: frontend
+  limits:
+    memory: "512Mi"
+    cpu: "250m"
+  config:
+    VITE_DOMAIN: "{{ .Values.common.protocol }}://{{ .Values.common.domain }}"
 
 api:
+  replicas: 1
   name: api
+  image: conv-api
+  tag: "1.0"
+  envs:
+  - AMQP_EXCHANGE
+  - AMQP_USER
+  - AMQP_PASSWORD
+  - AMQP_HOSTNAME
   targetPort: 3000
+  port: 3000
+  component: backend
+  limits:
+    memory: "256Mi"
+    cpu: "125m"
+  pvc:
+    requests:
+      storage: 2Gi
+
+
+mq:
+  replicas: 1
+  name: mq
+  image: rabbitmq
+  tag: "4.0.5-alpine"
+  envs:
+  - RABBITMQ_DEFAULT_USER
+  - RABBITMQ_DEFAULT_PASS
+  targetPort: 5672
+  port: 5672
+  component: broker
+  limits:
+    memory: "512Mi"
+    cpu: "250m"
+  pvc:
+    requests:
+      storage: 1Gi
+
+processor:
+  replicas: 5
+  name: processor
+  image: conv-service
+  tag: "1.0"
+  envs:
+  - AMQP_EXCHANGE
+  - AMQP_USER
+  - AMQP_PASSWORD
+  - AMQP_HOSTNAME
+  - AMQP_QUEUE
+  targetPort: 3000
+  port: 3000
+  component: image_processor
+  limits:
+    memory: "128Mi"
+    cpu: "125m"
