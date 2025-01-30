@@ -1,11 +1,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: conv-api-pvc
+  name: "{{ .Values.common.name }}-{{ .Values.api.name }}-pvc"
 spec:
-  resources:
-    requests:
-      storage: 2Gi
+  resources: {{ .Values.api.pvc | toYaml | nindent 4 }}
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce

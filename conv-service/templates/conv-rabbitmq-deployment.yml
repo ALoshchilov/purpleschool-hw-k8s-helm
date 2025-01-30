@@ -1,42 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: conv-mq-deployment
+  name: "{{ .Values.common.name }}-{{ .Values.mq.name }}-deployment"
 spec:
-  replicas: 1
+  replicas: {{ .Values.mq.replicas }}
   selector:
     matchLabels:
-      component: broker
+      component: {{ .Values.mq.component }}
       
   template:
     metadata:
       labels:
-        component: broker
+        component: {{ .Values.mq.component }}
     spec:
       containers:
-      - name: conv-mq-deployment
-        image: rabbitmq:4.0.5-alpine
+      - name: "{{ .Values.common.name }}-{{ .Values.mq.name }}-deployment"
+        image: "{{ .Values.mq.image }}:{{ .Values.mq.tag }}"
         env:
-          - name: RABBITMQ_DEFAULT_USER
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_USER
-                name: conv-secrets
-          - name: RABBITMQ_DEFAULT_PASS
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_PASSWORD
-                name: conv-secrets
+          {{- range .Values.mq.envs  }}
+          {{- $data := dict "name" $.Values.common.name "env" . }}
+          {{- include "env.template" $data | indent 10}}
+          {{- end }}
         resources:
-          limits:
-            memory: "512Mi"
-            cpu: "250m"
+          limits: {{ .Values.mq.limits | toYaml | nindent 12 }}
         volumeMounts:
-          - name: rmq-data
+          - name: "{{ .Values.mq.name }}-data"
             mountPath: "/var/lib/rabbitmq"
         ports:
-        - containerPort: 5672
+        - containerPort: {{ .Values.mq.targetPort }}
       volumes:
-        - name: rmq-data
+        - name: "{{ .Values.mq.name }}-data"
           persistentVolumeClaim:
-            claimName: conv-mq-pvc
+            claimName: "{{ .Values.common.name }}-{{ .Values.mq.name }}-pvc"

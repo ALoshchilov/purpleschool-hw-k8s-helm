@@ -1,49 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: conv-processor-deployment
+  name: "{{ .Values.common.name }}-{{ .Values.processor.name }}-deployment"
 spec:
-  replicas: 5
+  replicas: {{ .Values.processor.replicas }}
   selector:
     matchLabels:
-      component: image_processor
+      component: {{ .Values.processor.component }}
   template:
     metadata:
       labels:
-        component: image_processor
+        component: {{ .Values.processor.component }}
     spec:
       containers:
-      - name: conv-processor-deployment
-        image: antonlarichev/conv-service:1.0
+      - name: "{{ .Values.common.name }}-{{ .Values.processor.name }}-deployment"
+        image: "{{ .Values.common.registry }}/{{ .Values.processor.image }}:{{ .Values.processor.tag }}"
         env:
-          - name: AMQP_EXCHANGE
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_EXCHANGE
-                name: conv-secrets
-          - name: AMQP_USER
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_USER
-                name: conv-secrets
-          - name: AMQP_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_PASSWORD
-                name: conv-secrets
-          - name: AMQP_HOSTNAME
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_HOSTNAME
-                name: conv-secrets
-          - name: AMQP_QUEUE
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_QUEUE
-                name: conv-secrets
+          {{- range .Values.processor.envs  }}
+          {{- $data := dict "name" $.Values.common.name "env" . }}
+          {{- include "env.template" $data | indent 10}}
+          {{- end }}
         resources:
-          limits:
-            memory: "128Mi"
-            cpu: "125m"
+          limits: {{ .Values.processor.limits | toYaml | nindent 12 }}
         ports:
-        - containerPort: 3000
+        - containerPort: {{ .Values.processor.targetPort }}

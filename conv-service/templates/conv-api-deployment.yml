@@ -1,51 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: conv-api-deployment
+  name: "{{ .Values.common.name }}-{{ .Values.api.name }}-deployment"
 spec:
-  replicas: 1
+  replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
-      component: backend
+      component: {{ .Values.api.component }}
   template:
     metadata:
       labels:
-        component: backend
+        component: {{ .Values.api.component }}
     spec:
       containers:
-      - name: conv-api-deployment
-        image: antonlarichev/conv-api:1.0
+      - name: "{{ .Values.common.name }}-{{ .Values.api.name }}-deployment"
+        image: "{{ .Values.common.registry }}/{{ .Values.api.image }}:{{ .Values.api.tag }}"
         env:
-          - name: AMQP_EXCHANGE
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_EXCHANGE
-                name: conv-secrets
-          - name: AMQP_USER
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_USER
-                name: conv-secrets
-          - name: AMQP_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_PASSWORD
-                name: conv-secrets
-          - name: AMQP_HOSTNAME
-            valueFrom:
-              secretKeyRef:
-                key: AMQP_HOSTNAME
-                name: conv-secrets
+          {{- range .Values.api.envs  }}
+          {{- $data := dict "name" $.Values.common.name "env" . }}
+          {{- include "env.template" $data | indent 10}}
+          {{- end }}
         volumeMounts:
-          - name: conv-images
+          - name: "{{ .Values.common.name }}-images"
             mountPath: "/opt/app/uploads"
         resources:
-          limits:
-            memory: "256Mi"
-            cpu: "125m"
+          limits: {{ .Values.api.limits | toYaml | nindent 12 }}
         ports:
-        - containerPort: 3000
+        - containerPort: {{ .Values.api.targetPort }}
       volumes:
-        - name: conv-images
+        - name: "{{ .Values.common.name }}-images"
           persistentVolumeClaim:
-            claimName: conv-api-pvc
+            claimName: "{{ .Values.common.name }}-{{ .Values.api.name }}-pvc"
